@@ -13,7 +13,7 @@ description: >-
 
 You are the orchestrator for a feature Andy wants built. Your job is to understand the feature deeply, make sure Andy and you agree on what's being built, then coordinate subagents to build and review it, and finally give an honest verdict. You don't write the feature code yourself during phase 4; you plan, delegate, check, and decide.
 
-The workflow has six phases. Phases 2 and 3 end with a checkpoint where you stop and wait for Andy. Don't skip a checkpoint because things seem obvious: the whole point of the grilling and the plan is that Andy catches misunderstandings before code exists, when they're cheap to fix.
+The workflow has a setup step (phase 0) and six phases. Phases 2 and 3 end with a checkpoint where you stop and wait for Andy. Don't skip a checkpoint because things seem obvious: the whole point of the grilling and the plan is that Andy catches misunderstandings before code exists, when they're cheap to fix.
 
 ## Settings
 
@@ -46,6 +46,19 @@ Keep everything for the run in `.local/dandy/<slug>/` at the repo root, where `<
 These files let a run resume after an interruption: if `.local/dandy/<slug>/` already exists when you start, read it, tell Andy which phase you're resuming from, and continue. Never edit `.gitignore` for this: add `.local/dandy/` to the repo's local exclude file (`$(git rev-parse --git-common-dir)/info/exclude`) if it isn't there, so working files never land in the PR and the PR diff stays clean.
 
 ---
+
+## Phase 0 — Workspace
+
+Settle where the run lives before writing any working file: `.local/dandy/` is uncommitted, and nothing carries it to a new checkout.
+
+1. Pick the branch: `andy/<issue-id>-<short-kebab-title>` (read the Linear title for it), or the branch Andy named.
+2. In T3 Code (`t3_worktree_status` exists), check this thread's worktree:
+   - Already on a non-default branch for this work → keep it.
+   - In a T3 worktree with a default-named branch → `git branch -m <new>` inside it. T3 follows the folder, so the thread stays bound.
+   - No worktree (on the project root / main) → call `t3_worktree_handoff` with `branch`, `baseRef: <base>`, and a `continuationPrompt` that says "Continue the dandy run for <slug> from phase 1" plus the Settings line. Make it the last call of the turn; the run resumes in the new worktree.
+3. Outside T3, follow the repo's worktree rules (e.g. `.claude/worktrees/<slug>`).
+
+Never `git checkout -b` in the root checkout, and never `git worktree add` for this thread inside T3. Either leaves the thread bound to main.
 
 ## Phase 1 — Gather context
 
@@ -116,7 +129,7 @@ Done when:
 
 ## Phase 4 — Implement and review, task by task
 
-Before the first task, create a feature branch off the base branch (e.g. `andy/pas-412-short-name`) unless Andy is already on one for this work.
+The branch was set in phase 0; confirm you're on it before the first task.
 
 For each task in order:
 
@@ -176,6 +189,6 @@ Be honest. A verdict that's softer than the code deserves defeats the purpose of
 - Title: `[PAS-412] <feature title>`
 - Body: summary of the feature, link to the Linear issue and Figma, key decisions, the task list, how it was tested, and the notes from a SHIP WITH NOTES verdict. Don't paste working files or anything sensitive.
 
-Share the PR link.
+In T3, link the PR to this thread (`link_pull_request`). Share the PR link.
 
 **Otherwise**, tell Andy it's finished: branch name, number of commits, the verdict, and any notes. Don't push or open a PR unasked.
