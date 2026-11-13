@@ -85,9 +85,11 @@ Never copy secrets, API keys, customer PII, or internal financial data from any 
 Use the `/grilling` skill to interrogate the open questions from phase 1, in batches.
 
 How to batch:
-- Ask 3–5 questions per batch, then stop and wait for answers.
+- Ask every question through the interactive questions tool (`AskUserQuestion` in Claude Code; the equivalent structured question tool in other harnesses), never as plain text in chat.
+- Ask up to 4 questions per batch (one tool call), then stop and wait for answers. This overrides grilling's one-at-a-time rule.
+- Each question stands on its own and has 2–4 options. Put your recommended option first with "(Recommended)" at the end of its label, and give every option a short description carrying its trade-off.
 - Order questions by how much they change the implementation. Scope, data model, and behavior questions come before naming and copy.
-- Each question should be concrete and, where possible, offer your recommended answer, so Andy can reply "yes" instead of writing an essay. For example: "Should archived items appear in search? I'd exclude them, matching how the list view filters them."
+- Each question should be concrete, so Andy can pick the recommended option instead of writing an essay. For example: "Should archived items appear in search?" with "Exclude (Recommended)" described as "matches how the list view filters them".
 - Don't ask what tandy or the repo's agent files already answer. Ask where they say nothing, where a rule conflicts with the feature, or to confirm a simplification or deletion of existing code in the feature's path.
 - Later batches should build on earlier answers; drop questions that an answer already resolved and add new ones it raised.
 
