@@ -4,7 +4,7 @@ description: >-
   Get a GitHub PR ready to merge: fix CI failures caused by the PR, and triage
   Greptile/CodeRabbit review comments, fixing what matters and replying to each
   with "Fixed in <commit>" or "Not fixing now because <reason>". Resolve the
-  thread after a fix. Use when the user invokes /babysit-pr or asks to handle
+  thread after a fix, then wait for CI and repeat until green. Use when the user invokes /babysit-pr or asks to handle
   failing checks or bot review comments on a PR.
 ---
 
@@ -78,10 +78,19 @@ Review-body items have no thread, so answer them in one PR comment with a line p
 
 Never include secrets, keys, or customer data in replies.
 
-## 6. Report
+## 6. Wait for CI and repeat
+
+After pushing, don't hand the next round back to the user. Wait for CI and the bots, then go again:
+
+- In T3 Code, call `watch_pull_request` on the PR and end your turn; you are woken when checks or reviews change. Elsewhere, block on `gh pr checks --watch --fail-fast`.
+- When woken: if checks are still running, keep waiting. If there is a new CI failure or a new Greptile/CodeRabbit comment, repeat steps 2–5.
+- You're done when every check passes (or only fails for reasons you've marked flaky, infra, or broken on base), Greptile has reviewed the current head commit, and no bot comment is left unanswered. Then unwatch the PR (`unwatch_pull_request`) and report.
+- Stop and report instead of looping after 5 rounds, or when the same failure comes back after your fix.
+
+## 7. Report
 
 Tell the user, briefly:
 - CI: what failed, what you fixed, and what you left alone (flaky, infra, or broken on base) and why.
 - Comments: how many were fixed vs. not fixed, with one line each (`path:line — fixed a1b2c3d, thread resolved` / `not fixing: reason`).
 - Anything worth a follow-up issue.
-- Whether local checks passed and everything was pushed. CI re-runs on the push; run /babysit-pr again if new failures or comments appear.
+- Whether local checks passed, everything was pushed, and how many rounds it took. If you stopped early (round limit or repeated failure), say why.
